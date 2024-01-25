@@ -1,5 +1,6 @@
 import os
 
+import requests
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,10 +10,28 @@ from torch.utils.data import DataLoader, DistributedSampler
 from torchvision import datasets, transforms
 
 
-def setup(rank, world_size):
-    # Initialize the distributed environment.
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
-    # torch.cuda.set_device(rank)
+def register_with_discovery():
+    # register with the dml-discover service and get the master address, port and rank
+    response = requests.post("http://dml-discover:5000/register")
+    if response.status_code != 200:
+        raise Exception("Failed to register with dml-discover")
+    return response.json()["master_addr"], response.json()["master_port"], response.json()["rank"]
+
+
+def setup():
+    world_size = int(os.environ['WORLD_SIZE'])
+
+    # Assuming you have a discovery service that provides these details
+    master_addr, master_port, rank = register_with_discovery()  # Replace with your discovery mechanism
+
+    os.environ['MASTER_ADDR'] = master_addr
+    os.environ['MASTER_PORT'] = master_port
+
+    # initialize the process group
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
+    return world_size, rank
+
 
 class MNISTNet(nn.Module):
     def __init__(self):
@@ -32,8 +51,9 @@ class MNISTNet(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
-def train(rank, world_size):
-    setup(rank, world_size)
+
+def train():
+    world_size, rank = setup()
 
     # Load MNIST dataset.
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
@@ -66,10 +86,7 @@ def train(rank, world_size):
 
 
 def main():
-    rank = int(os.environ.get('RANK'))
-    world_size = int(os.environ['WORLD_SIZE'])
-    print(f"Rank {rank} of {world_size}")
-    train(rank, world_size)
+    train()
 
 
 if __name__ == "__main__":

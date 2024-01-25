@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dml-discovery-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dml-discovery-service
+  template:
+    metadata:
+      labels:
+        app: dml-discovery-service
+    spec:
+      containers:
+      - name: dml-discovery-service
+        image: eismcc/dml-discovery:latest
+        ports:
+        - containerPort: 5000
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "1"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dml-discovery-service
+spec:
+  selector:
+    app: dml-discovery-service
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

@@ -1,21 +1,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pytorch-training
+  name: dml-minst-job
 spec:
-  parallelism: 4  # Number of pods
+  parallelism: 4 # should be the same as WORLD_SIZE
   template:
     spec:
       containers:
-      - name: pytorch-container
-        image: eismcc/dmnist-cpu:latest  # Replace with your Docker image
+      - name: dml-minst-container
+        image: eismcc/dmnist-cpu:latest
         ports:
         - containerPort: 8888
         env:
-        - name: MASTER_ADDR
-          value: "alpha"
-        - name: MASTER_PORT
-          value: "8888"
         - name: WORLD_SIZE
           value: "4"  # Set to the parallelism count
         resources:
