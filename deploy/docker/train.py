@@ -1,6 +1,6 @@
-import torch
+import os
+
 import torch.distributed as dist
-import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -64,13 +64,14 @@ def train(rank, world_size):
             if batch_idx % 10 == 0:
                 print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Loss {loss.item()}")
 
+
 def main():
-    world_size = 2  # Adjust this for the number of GPUs available
-    mp.spawn(train, args=(world_size,), nprocs=world_size, join=True)
+    rank = int(os.environ.get('RANK'))
+    world_size = int(os.environ['WORLD_SIZE'])
+    print(f"Rank {rank} of {world_size}")
+    train(rank, world_size)
+
 
 if __name__ == "__main__":
-    import os
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'  # Example port, ensure it's open and not used by another process
     main()
 

@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pytorch-training
+spec:
+  parallelism: 4  # Number of pods
+  template:
+    spec:
+      containers:
+      - name: pytorch-container
+        image: eismcc/dmnist-cpu:latest  # Replace with your Docker image
+        ports:
+        - containerPort: 8888
+        env:
+        - name: MASTER_ADDR
+          value: "alpha"
+        - name: MASTER_PORT
+          value: "8888"
+        - name: WORLD_SIZE
+          value: "4"  # Set to the parallelism count
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "1"
+            memory: "512Mi"
+      restartPolicy: Never
