@@ -2,6 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: dml-minst-job
+  namespace: dml
 spec:
   parallelism: 4 # should be the same as WORLD_SIZE
   template:
@@ -9,6 +10,7 @@ spec:
       containers:
       - name: dml-minst-container
         image: eismcc/dmnist-cpu:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8888
         env:

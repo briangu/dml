@@ -37,5 +37,5 @@ def get_pods():
     return jsonify(pods_info)
 
 if __name__ == '__main__':
-    pods_info['master_port'] = os.environ['MASTER_PORT']
+    pods_info['master_port'] = int(os.environ['MASTER_PORT'])
     app.run(host='0.0.0.0', port=5000, debug=True)

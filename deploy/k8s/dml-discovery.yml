@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dml-discovery-service
+  namespace: dml
 spec:
   replicas: 1
   selector:
@@ -15,8 +16,12 @@ spec:
       containers:
       - name: dml-discovery-service
         image: eismcc/dml-discovery:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        env:
+        - name: MASTER_PORT
+          value: "8888"
         resources:
           limits:
             cpu: "1"
@@ -29,6 +34,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: dml-discovery-service
+  namespace: dml
 spec:
   selector:
     app: dml-discovery-service
