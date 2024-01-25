@@ -17,18 +17,31 @@ spec:
       - name: dml-discovery-service
         image: eismcc/dml-discovery:latest
         imagePullPolicy: Always
+        command: ["python3", "service.py"]
         ports:
         - containerPort: 5000
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 20
         env:
         - name: MASTER_PORT
           value: "8888"
         resources:
           limits:
             cpu: "1"
-            memory: "1Gi"
+            memory: "16Gi"
           requests:
             cpu: "1"
-            memory: "512Mi"
+            memory: "1Gi"
 ---
 apiVersion: v1
 kind: Service
