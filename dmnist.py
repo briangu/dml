@@ -1,16 +1,18 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import torch.distributed as dist
 import torch.multiprocessing as mp
-from torchvision import datasets, transforms
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
+from torchvision import datasets, transforms
+
 
 def setup(rank, world_size):
     # Initialize the distributed environment.
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
-    torch.cuda.set_device(rank)
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    # torch.cuda.set_device(rank)
 
 class MNISTNet(nn.Module):
     def __init__(self):
@@ -40,8 +42,10 @@ def train(rank, world_size):
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=64)
 
     # Create model, move it to GPU with DDP.
-    model = MNISTNet().to(rank)
-    model = DDP(model, device_ids=[rank])
+    # model = MNISTNet().to(rank)
+    # model = DDP(model, device_ids=[rank])
+    model = MNISTNet()
+    model = DDP(model)
 
     # Loss function and optimizer.
     criterion = nn.CrossEntropyLoss()
@@ -51,7 +55,7 @@ def train(rank, world_size):
     for epoch in range(1, 2):  # Just one epoch for demo
         model.train()
         for batch_idx, (data, target) in enumerate(dataloader):
-            data, target = data.to(rank), target.to(rank)
+            # data, target = data.to(rank), target.to(rank)
             optimizer.zero_grad()
             output = model(data)
             loss = criterion(output, target)
@@ -65,5 +69,8 @@ def main():
     mp.spawn(train, args=(world_size,), nprocs=world_size, join=True)
 
 if __name__ == "__main__":
+    import os
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'  # Example port, ensure it's open and not used by another process
     main()
 
