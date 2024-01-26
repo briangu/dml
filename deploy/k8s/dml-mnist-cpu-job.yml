@@ -11,7 +11,6 @@ spec:
       - name: dml-minst-container
         image: eismcc/dml-mnist-cpu:latest
         imagePullPolicy: Always
-        command: ["python3", "train.py"]
         ports:
         - containerPort: 8888
         env:

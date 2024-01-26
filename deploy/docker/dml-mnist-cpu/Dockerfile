@@ -10,6 +10,8 @@ COPY . .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV PYTHONUNBUFFERED=1
+
 RUN python3 download_mnist.py
 
 # Run train.py when the container launches
