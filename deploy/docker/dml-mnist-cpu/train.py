@@ -1,4 +1,5 @@
 import os
+import sys
 
 import requests
 import torch.distributed as dist
@@ -38,23 +39,24 @@ def setup():
 class MNISTNet(nn.Module):
     def __init__(self):
         super(MNISTNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
-        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear(320, 50)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
+        self.conv2 = nn.Conv2d(32, 20, kernel_size=3)
+        # self.conv2_drop = nn.Dropout2d()
+        self.fc1 = nn.Linear(500, 50)
         self.fc2 = nn.Linear(50, 10)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = x.view(-1, 320)
+#        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        x = F.relu(F.max_pool2d(self.conv2(x), 2))
+        x = x.view(-1, 500)
         x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
+        # x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
 
-def train():
+def train(lr=0.001):
     print("Setting up")
 
     world_size, rank = setup()
@@ -62,7 +64,11 @@ def train():
     print("Rank", rank, "World Size", world_size)
 
     # Load MNIST dataset.
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        # add rotation
+        transforms.RandomRotation(10),
+        ]) #, transforms.Normalize((0.1307,), (0.3081,))])
     dataset = datasets.MNIST('data', train=True, download=True, transform=transform)
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=64)
@@ -75,12 +81,12 @@ def train():
 
     # Loss function and optimizer.
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     print("Starting training")
 
     # Training loop.
-    for epoch in range(1, 10):  # Just one epoch for demo
+    for epoch in range(1, 100):
         model.train()
         for batch_idx, (data, target) in enumerate(dataloader):
             # data, target = data.to(rank), target.to(rank)
@@ -94,5 +100,6 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
+    train(float(os.environ.get('LEARNING_RATE', 0.001)))
+    sys.exit(0)
 

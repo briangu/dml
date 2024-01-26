@@ -4,9 +4,20 @@ metadata:
   name: dml-minst-job
   namespace: dml
 spec:
-  parallelism: 4 # should be the same as WORLD_SIZE
+  completions: 8 # should be the same as WORLD_SIZE
+  parallelism: 8 # should be the same as WORLD_SIZE
   template:
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: job-name
+                    operator: In
+                    values:
+                    - dml-minst-job
+              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: dml-minst-container
         image: eismcc/dml-mnist-cpu:latest
@@ -16,12 +27,14 @@ spec:
         - containerPort: 8888
         env:
         - name: WORLD_SIZE
-          value: "4"  # Set to the parallelism count
-        resources:
-          limits:
-            cpu: "1"
-            memory: "16Gi"
-          requests:
-            cpu: "1"
-            memory: "1Gi"
+          value: "8"  # Set to the parallelism count
+        - name: LEARNING_RATE
+          value: "0.001"
+        # resources:
+        #   limits:
+        #     cpu: "128"
+        #     memory: "16Gi"
+        #   requests:
+        #     cpu: "128"
+        #     memory: "1Gi"
       restartPolicy: Never
