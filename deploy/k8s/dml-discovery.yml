@@ -13,6 +13,8 @@ spec:
       labels:
         app: dml-discovery-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
       - name: dml-discovery-service
         image: eismcc/dml-discovery:latest
