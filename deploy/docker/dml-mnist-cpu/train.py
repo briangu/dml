@@ -24,6 +24,8 @@ def setup():
     # Assuming you have a discovery service that provides these details
     master_addr, master_port, rank = register_with_discovery()  # Replace with your discovery mechanism
 
+    print("Master Address", master_addr, "Master Port", master_port, "Rank", rank, "World Size", world_size)
+
     os.environ['MASTER_ADDR'] = str(master_addr)
     os.environ['MASTER_PORT'] = str(master_port)
 
@@ -53,7 +55,11 @@ class MNISTNet(nn.Module):
 
 
 def train():
+    print("Setting up")
+
     world_size, rank = setup()
+
+    print("Rank", rank, "World Size", world_size)
 
     # Load MNIST dataset.
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
@@ -71,6 +77,8 @@ def train():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
+    print("Starting training")
+
     # Training loop.
     for epoch in range(1, 10):  # Just one epoch for demo
         model.train()
@@ -85,10 +93,6 @@ def train():
                 print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Loss {loss.item()}")
 
 
-def main():
-    train()
-
-
 if __name__ == "__main__":
-    main()
+    train()
 

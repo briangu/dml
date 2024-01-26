@@ -11,6 +11,7 @@ spec:
       - name: dml-minst-container
         image: eismcc/dml-mnist-cpu:latest
         imagePullPolicy: Always
+        command: ["python3", "train.py"]
         ports:
         - containerPort: 8888
         env:
@@ -19,8 +20,8 @@ spec:
         resources:
           limits:
             cpu: "1"
-            memory: "1Gi"
+            memory: "16Gi"
           requests:
             cpu: "1"
-            memory: "512Mi"
+            memory: "1Gi"
       restartPolicy: Never

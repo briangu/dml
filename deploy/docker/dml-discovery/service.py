@@ -24,6 +24,7 @@ def health_check():
 @app.route('/register', methods=['POST'])
 def register_pod():
     pod_ip = request.remote_addr
+
     with lock:
         if not pods_info["pods"]:
             # First registered node becomes the master
@@ -38,7 +39,8 @@ def register_pod():
         "master_port": pods_info["master_port"]
     }
 
-    print(data)
+    # log the data to the flask logging
+    app.logger.info(data)
 
     return jsonify(data)
 
