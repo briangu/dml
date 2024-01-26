@@ -32,11 +32,15 @@ def register_pod():
         rank = len(pods_info["pods"])
         pods_info["pods"].append({"ip": pod_ip, "rank": rank})
 
-    return jsonify({
+    data = {
         "rank": rank,
         "master_addr": pods_info["master_addr"],
         "master_port": pods_info["master_port"]
-    })
+    }
+
+    print(data)
+
+    return jsonify(data)
 
 @app.route('/pods', methods=['GET'])
 def get_pods():

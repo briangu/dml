@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: dml-minst-container
-        image: eismcc/dmnist-cpu:latest
+        image: eismcc/dml-mnist-cpu:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8888
