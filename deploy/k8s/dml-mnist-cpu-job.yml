@@ -30,6 +30,8 @@ spec:
           value: "4"  # Set to the parallelism count
         - name: LEARNING_RATE
           value: "0.001"
+        - name: JOB_UUID
+          value: "placeholder-for-uuid"
         # resources:
         #   limits:
         #     cpu: "128"

@@ -6,29 +6,38 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from kubernetes import client, config
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 from torchvision import datasets, transforms
 
 
 def register_with_discovery():
-    # register with the dml-discover service and get the master address, port and rank
-    response = requests.post("http://dml-discovery-service:5000/register")
+    """ register with the dml-discover service and get the master address and worker rank """
+    url = "http://dml-discovery-service:5000/register"
+    headers = {'Content-Type': 'application/json'}
+
+    job_id = os.environ.get('JOB_UUID', 'dml-mnist-job')
+    print(f"Current Job ID: {job_id}")
+
+    request = {"job_id": job_id}
+    response = requests.post(url, json=request, headers=headers)
     if response.status_code != 200:
+        print(response.status_code, response.reason, response.text)
         raise Exception("Failed to register with dml-discover")
-    return response.json()["master_addr"], response.json()["master_port"], response.json()["rank"]
+    return response.json()["master_addr"], response.json()["rank"]
 
 
 def setup():
     world_size = int(os.environ['WORLD_SIZE'])
 
     # Assuming you have a discovery service that provides these details
-    master_addr, master_port, rank = register_with_discovery()  # Replace with your discovery mechanism
+    master_addr, rank = register_with_discovery()  # Replace with your discovery mechanism
 
-    print("Master Address", master_addr, "Master Port", master_port, "Rank", rank, "World Size", world_size)
+    print("Master Address", master_addr, "Rank", rank, "World Size", world_size)
 
     os.environ['MASTER_ADDR'] = str(master_addr)
-    os.environ['MASTER_PORT'] = str(master_port)
+    # os.environ['MASTER_PORT'] = str(master_port)
 
     # initialize the process group
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
@@ -100,6 +109,7 @@ def train(lr=0.001):
 
 
 if __name__ == "__main__":
+    os.environ['MASTER_PORT'] = str(os.environ.get('MASTER_PORT', 8888))
     train(float(os.environ.get('LEARNING_RATE', 0.001)))
     sys.exit(0)
 
