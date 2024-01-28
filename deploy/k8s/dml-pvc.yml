@@ -1,0 +1,34 @@
+# create a pv and pvc for NAS folder
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dml-data-pv
+  namespace: dml
+  labels:
+    app: dml-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    server: 192.168.0.10
+    path: "/volume1/data/dml"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dml-data-pvc
+  namespace: dml
+spec:
+  storageClassName: nfs
+  selector:
+    matchLabels:
+      app: dml-data
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
