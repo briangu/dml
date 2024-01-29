@@ -52,6 +52,10 @@ def setup():
         server = ServerThread(app)
         server.start()
 
+    # set the environment variables for the process group
+    os.environ['MASTER_ADDR'] = master_addr
+    os.environ['MASTER_PORT'] = str(pytorch_port)
+
     # initialize the process group
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
@@ -109,9 +113,6 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
 
 if __name__ == "__main__":
     world_size, rank, master_addr, pytorch_port, config_port, output_path = setup()
-
-    os.environ['MASTER_ADDR'] = master_addr
-    os.environ['MASTER_PORT'] = str(pytorch_port)
 
     config = ask_for_config(master_addr, pytorch_port)
     print("Setting up")
