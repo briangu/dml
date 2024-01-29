@@ -42,7 +42,8 @@ def setup():
     else:
         master_addr = os.environ['MASTER_ADDR']
         rank = int(os.environ['RANK'])
-    master_port = int(os.environ.get('MASTER_PORT', 8889))
+    pytorch_port = int(os.environ.get('PYTORCH_PORT', 8890))
+    config_port = int(os.environ.get('CONFIG_PORT', 8891))
 
     output_path = os.environ['OUTPUT_PATH']
 
@@ -54,10 +55,10 @@ def setup():
     # initialize the process group
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
-    return world_size, rank, master_addr, master_port, output_path
+    return world_size, rank, master_addr, pytorch_port, config_port, output_path
 
 
-def train(world_size, rank, master_addr, master_port, output_path, config):
+def train(world_size, rank, master_addr, config_port, output_path, config):
     lr=config['lr']
     num_epochs=config['num_epochs']
     batch_size=config['batch_size']
@@ -74,7 +75,7 @@ def train(world_size, rank, master_addr, master_port, output_path, config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Data Loader
-    dataset = StreamingTokenDataset(master_addr, master_port, sequence_length)
+    dataset = StreamingTokenDataset(master_addr, config_port, sequence_length)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
 
@@ -107,15 +108,18 @@ def train(world_size, rank, master_addr, master_port, output_path, config):
 
 
 if __name__ == "__main__":
-    os.environ['MASTER_PORT'] = str(os.environ.get('MASTER_PORT', 8810))
-    world_size, rank, master_addr, master_port, output_path = setup()
-    config = ask_for_config(master_addr, master_port)
+    world_size, rank, master_addr, pytorch_port, config_port, output_path = setup()
+
+    os.environ['MASTER_ADDR'] = master_addr
+    os.environ['MASTER_PORT'] = str(pytorch_port)
+
+    config = ask_for_config(master_addr, pytorch_port)
     print("Setting up")
     world_size, rank = setup()
     # print all the config variables
     print("Output Path", output_path,
           "Master Address", master_addr,
-          "Master Port", master_port,
+          "Master Port", pytorch_port,
           "Rank", rank,
           "World Size", world_size,
           "Config", config)
@@ -125,4 +129,4 @@ if __name__ == "__main__":
     #         time.sleep(1)
     #     print("All partitions processed")
     # else:
-    train(world_size, rank, master_addr, master_port, output_path, config)
+    train(world_size, rank, master_addr, config_port, output_path, config)

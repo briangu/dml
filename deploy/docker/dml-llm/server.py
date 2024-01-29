@@ -14,7 +14,7 @@ class ServerThread(threading.Thread):
 
     def __init__(self, app):
         super().__init__()
-        self.server = make_server('0.0.0.0', int(os.environ.get('PORT', 8890)), app)
+        self.server = make_server('0.0.0.0', int(os.environ['CONFIG_PORT']), app)
         self.ctx = app.app_context()
         self.ctx.push()
 
