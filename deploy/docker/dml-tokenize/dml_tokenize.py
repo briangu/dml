@@ -159,7 +159,21 @@ def trim_chunk(chunk_data):
     return chunk_data
 
 
+def is_done():
+    # check if all partitions are processed
+    for partition in partitions.values():
+        if partition['status'] != STATUS_PROCESSED:
+            return False
+    return True
+
+
 def process(world_size, rank, master_addr, master_port, input_file_path, output_path):
+
+    if rank == 0:
+        while not is_done():
+            time.sleep(1)
+        print("All partitions processed")
+        return
 
     # get the next partition to process
     partition_id, (start_pos, chunk_size) = ask_for_partition(master_addr, master_port)

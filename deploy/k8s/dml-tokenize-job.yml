@@ -4,8 +4,8 @@ metadata:
   name: dml-tokenize-job
   namespace: dml
 spec:
-  completions: 16 # should be the same as WORLD_SIZE
-  parallelism: 16 # should be the same as WORLD_SIZE
+  completions: 32 # should be the same as WORLD_SIZE
+  parallelism: 32 # should be the same as WORLD_SIZE
   template:
     spec:
       containers:
@@ -17,7 +17,7 @@ spec:
         - containerPort: 8889
         env:
         - name: WORLD_SIZE
-          value: "16"  # Set to the parallelism count
+          value: "32"  # Set to the parallelism count
         - name: INPUT_FILE_PATH
           value: "/data/input/c4.txt"
         - name: OUTPUT_PATH
