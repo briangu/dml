@@ -24,6 +24,8 @@ class ServerThread(threading.Thread):
     def shutdown(self):
         self.server.shutdown()
 
+server = None
+
 
 app = Flask(__name__)
 
@@ -75,7 +77,6 @@ def populate_partitions(input_file_path, max_chunk_size):
         chunk_size = min((i+1)*max_chunk_size, file_size) - start_pos
         partitions[i] = {'status': STATUS_UNPROCESSED, 'offset': [start_pos, chunk_size]}
 
-
 def register_with_discovery():
     """ register with the dml-discover service and get the master address and worker rank """
     url = "http://dml-discovery-service:5000/register"
@@ -92,6 +93,8 @@ def register_with_discovery():
 
 
 def setup():
+    global server
+
     world_size = int(os.environ['WORLD_SIZE'])
 
     if os.environ.get('MASTER_ADDR', None) is None:
@@ -103,6 +106,12 @@ def setup():
 
     input_file_path = os.environ['INPUT_FILE_PATH']
     output_path = os.environ['OUTPUT_PATH']
+
+    if rank == 0:
+        populate_partitions(os.environ['INPUT_FILE_PATH'], int(os.environ.get('MAX_CHUNK_SIZE', 1024*1024*2)))
+        print("Partitions:", len(partitions))
+        server = ServerThread(app)
+        server.start()
 
     # print all the config variables
     print("Input File Path", input_file_path,
@@ -155,30 +164,46 @@ def process(world_size, rank, master_addr, master_port, input_file_path, output_
     # get the next partition to process
     partition_id, (start_pos, chunk_size) = ask_for_partition(master_addr, master_port)
 
+    attempts = 0
     while partition_id is not None:
         # if the partition is None, it means the work is done
         if partition_id is None:
-            return
+            attempts += 1
+            if attempts > 5:
+                print("No more partitions to process")
+                break
+            time.sleep(1)
+            continue
 
         output_file_path = os.path.join(output_path, f"{partition_id}.json")
 
-        # Open the file and seek to the start position of the chunk
-        with open(input_file_path, 'r') as f:
-            f.seek(start_pos)
-            offset = 0
-            completed = False
-            while not completed:
-                f.seek(start_pos+offset)
-                try:
-                    data = f.read(chunk_size)
-                    chunk_data = trim_chunk(data)
-                    process_chunk(chunk_data, output_file_path)
-                    report_partition_completion(master_addr, master_port, partition_id)
-                    completed = True
-                except:
-                    print("Failed to process chunk, retrying")
-                    offset += 1
-                    chunk_size -= 1
+        try:
+            # Open the file and seek to the start position of the chunk
+            with open(input_file_path, 'r', encoding='utf8') as f:
+                f.seek(start_pos)
+                head_offset = 0
+                tail_offset = 0
+                completed = False
+                while not completed:
+                    f.seek(start_pos+head_offset)
+                    try:
+                        data = f.read(chunk_size - tail_offset)
+                        chunk_data = trim_chunk(data)
+                        if len(chunk_data) == 0:
+                            raise Exception("Chunk is empty")
+                        print("Processing chunk", partition_id, head_offset, chunk_size, len(chunk_data))
+                        process_chunk(chunk_data, output_file_path)
+                        report_partition_completion(master_addr, master_port, partition_id)
+                        completed = True
+                    except:
+                        print("Failed to process chunk, retrying", partition_id, head_offset, tail_offset, chunk_size)
+                        if head_offset == tail_offset:
+                            head_offset += 1
+                        else:
+                            tail_offset += 1
+        except Exception as e:
+            print("Failed to process chunk", partition_id, e)
+            report_partition_completion(master_addr, master_port, partition_id)
 
         partition_id, (start_pos, chunk_size) = ask_for_partition(master_addr, master_port)
 
@@ -194,19 +219,10 @@ def process_chunk(chunk_data, output_file_path):
 
 
 if __name__ == "__main__":
-    populate_partitions(os.environ['INPUT_FILE_PATH'], int(os.environ.get('MAX_CHUNK_SIZE', 1024*1024*2)))
-    print(partitions)
-
-    # Start Flask server in a new thread
-    server = ServerThread(app)
-    server.start()
-
     process(*setup())
 
     print("Done")
 
-    # signal the Flask server to stop
-    requests.post("http://localhost:8889/shutdown")
-
-    server.shutdown()
-    server.join()
+    if server is not None:
+        server.shutdown()
+        server.join()

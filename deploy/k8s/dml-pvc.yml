@@ -32,3 +32,38 @@ spec:
   resources:
     requests:
       storage: 1Gi
+---
+# same storage NAS but different NIC
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dml-data-2-pv
+  namespace: dml
+  labels:
+    app: dml-data-2
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    server: 192.168.0.43
+    path: "/volume1/data/dml"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dml-data-2-pvc
+  namespace: dml
+spec:
+  storageClassName: nfs
+  selector:
+    matchLabels:
+      app: dml-data-2
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi

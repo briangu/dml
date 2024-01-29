@@ -4,20 +4,10 @@ metadata:
   name: dml-tokenize-job
   namespace: dml
 spec:
-  completions: 4 # should be the same as WORLD_SIZE
-  parallelism: 4 # should be the same as WORLD_SIZE
+  completions: 16 # should be the same as WORLD_SIZE
+  parallelism: 16 # should be the same as WORLD_SIZE
   template:
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: job-name
-                    operator: In
-                    values:
-                    - dml-tokenize-job
-              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: dml-tokenize-container
         image: eismcc/dml-tokenize:latest
@@ -27,23 +17,27 @@ spec:
         - containerPort: 8889
         env:
         - name: WORLD_SIZE
-          value: "4"  # Set to the parallelism count
+          value: "16"  # Set to the parallelism count
         - name: INPUT_FILE_PATH
-          value: "/data/input/c4_1M.txt"
+          value: "/data/input/c4.txt"
         - name: OUTPUT_PATH
-          value: "/data/output"
+          value: "/data2/output"
         - name: JOB_UUID
           value: "placeholder-for-uuid"
-        # resources:
-        #   limits:
-        #     cpu: "128"
-        #     memory: "16Gi"
-        #   requests:
-        #     cpu: "128"
-        #     memory: "1Gi"
+        - name: MAX_CHUNK_SIZE
+          value: "16777216"
+        resources:
+          limits:
+            cpu: "2"
+            memory: "16Gi"
+          requests:
+            cpu: "1"
+            memory: "4Gi"
         volumeMounts:
         - mountPath: /data
           name: dml-data
+        - mountPath: /data2
+          name: dml-data-2
       restartPolicy: Never
       imagePullSecrets:
         - name: regcred
@@ -51,3 +45,6 @@ spec:
         - name: dml-data
           persistentVolumeClaim:
             claimName: dml-data-pvc
+        - name: dml-data-2
+          persistentVolumeClaim:
+            claimName: dml-data-2-pvc
