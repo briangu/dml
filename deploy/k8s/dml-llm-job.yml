@@ -1,38 +1,37 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dml-tokenize-job
+  name: dml-llm-job
   namespace: dml
 spec:
-  completions: 32 # should be the same as WORLD_SIZE
-  parallelism: 32 # should be the same as WORLD_SIZE
+  completions: 4 # should be the same as WORLD_SIZE
+  parallelism: 4 # should be the same as WORLD_SIZE
   template:
     spec:
       containers:
-      - name: dml-tokenize-container
-        image: eismcc/dml-tokenize:latest
+      - name: dml-llm-container
+        image: eismcc/dml-llm:latest
         imagePullPolicy: Always
-        command: ["python3", "dml_tokenize.py"]
+        command: ["python3", "train.py"]
         ports:
         - containerPort: 8889
         env:
         - name: WORLD_SIZE
-          value: "32"  # Set to the parallelism count
-        - name: INPUT_FILE_PATH
-          value: "/data/input/c4.txt"
+          value: "4"  # Set to the parallelism count
+        - name: INPUT_PATH
+          value: "/data/output"
         - name: OUTPUT_PATH
-          value: "/data2/output"
+          value: "/data2/llm_output"
         - name: JOB_UUID
           value: "placeholder-for-uuid"
-        - name: MAX_CHUNK_SIZE
-          value: "134217728"
         resources:
           limits:
-            cpu: "2"
-            memory: "16Gi"
-          requests:
-            cpu: "1"
-            memory: "4Gi"
+            nvidia.com/gpu: 1
+        #     cpu: "2"
+        #     memory: "16Gi"
+        #   requests:
+        #     cpu: "1"
+        #     memory: "4Gi"
         volumeMounts:
         - mountPath: /data
           name: dml-data

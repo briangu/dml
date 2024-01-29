@@ -1,4 +1,4 @@
-import json
+# import json
 import os
 import threading
 import time
@@ -8,6 +8,7 @@ import tiktoken
 from flask import Flask, jsonify
 from flask import request as flask_request
 from werkzeug.serving import make_server
+import simdjson as json
 
 # https://stackoverflow.com/questions/15562446/how-to-stop-flask-application-without-using-ctrl-c
 class ServerThread(threading.Thread):
@@ -159,7 +160,7 @@ def trim_chunk(chunk_data):
     return chunk_data
 
 
-def is_done():
+def all_partitions_completed():
     # check if all partitions are processed
     for partition in partitions.values():
         if partition['status'] != STATUS_PROCESSED:
@@ -170,7 +171,7 @@ def is_done():
 def process(world_size, rank, master_addr, master_port, input_file_path, output_path):
 
     if rank == 0:
-        while not is_done():
+        while not all_partitions_completed():
             time.sleep(1)
         print("All partitions processed")
         return
