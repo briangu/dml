@@ -50,6 +50,8 @@ def get_partition():
             partition['status'] = STATUS_PROCESSING
             partition['timestamp'] = now
             return jsonify(partition_id=partition_id, offset=partition['offset'])
+    # TODO: send semaphore that indicates we are waiting for a partition to be available
+    #           and if all are closed we send the sentinel that the work is done
     # send the sentinel that the work is done
     return jsonify(partition_id=None, offset=[None, None])
 
