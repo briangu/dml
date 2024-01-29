@@ -13,7 +13,8 @@ def update_job_manifest(file_path, job_uuid):
 
     # Update the UUID in the job manifest
     for container in job_manifest['spec']['template']['spec']['containers']:
-        if container['name'] == 'dml-minst-container':
+        # find the container name that ends in -container
+        if container['name'].endswith('-container'):
             for env_var in container['env']:
                 if env_var['name'] == 'JOB_UUID':
                     env_var['value'] = job_uuid

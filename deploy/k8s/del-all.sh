@@ -1,2 +1,7 @@
 kubectl delete -f dml-discovery.yml
-kubectl delete -f dml-mnist-cpu-job.yml
+
+# find all -job.yml files and delete them from k8s
+for f in $(find . -name "*-job.yml"); do
+    kubectl delete -f $f
+done
+
