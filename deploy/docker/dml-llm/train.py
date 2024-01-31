@@ -87,12 +87,11 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
 
     # Device configuration
     device = torch.device(f'cuda' if torch.cuda.is_available() else 'cpu')
-    # torch.cuda.set_device(device)
 
     # Data Loader
-    dataset = StreamingTokenDataset(master_addr, config_port, sequence_length)
     # sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
     # dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
+    dataset = StreamingTokenDataset(master_addr, config_port, sequence_length)
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
     # Create model, move it to GPU with DDP (if using GPUs)
@@ -118,7 +117,7 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
-            if rank == 0 and batch_idx % 10 == 0:  # Print on one process
+            if batch_idx % 10 == 0:
                 print(f"Epoch {epoch}, Batch {batch_idx}, Loss {loss.item()}")
 
     # TODO: Save model
@@ -139,9 +138,4 @@ if __name__ == "__main__":
           "World Size", world_size,
           "Config", config)
 
-    # if rank == 0:
-    #     while not all_partitions_completed():
-    #         time.sleep(1)
-    #     print("All partitions processed")
-    # else:
     train(world_size, rank, master_addr, config_port, output_path, config)
