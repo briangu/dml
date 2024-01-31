@@ -35,13 +35,13 @@ spec:
         - name: MODEL_SEQUENCE_LENGTH
           value: "128"
         - name: MODEL_NUM_HEADS
-          value: "2"
+          value: "4"
         - name: MODEL_NUM_LAYERS
-          value: "2"
+          value: "4"
         - name: MODEL_FORWARD_EXPANSION
           value: "4"
         - name: MODEL_QUANTIZE_BUCKETS
-          value: "256"
+          value: "1024"
         - name: MODEL_MODEL_DROPOUT
           value: "0.1"
         - name: TRAIN_LR
