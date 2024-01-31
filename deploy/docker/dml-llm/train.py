@@ -58,6 +58,8 @@ def setup():
     # set the environment variables for the process group
     os.environ['MASTER_ADDR'] = master_addr
     os.environ['MASTER_PORT'] = str(pytorch_port)
+    os.environ['RANK'] = str(rank)
+    os.environ['WORLD_SIZE'] = str(world_size)
 
     # initialize the process group
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
@@ -84,7 +86,8 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
     max_length=config['max_length']
 
     # Device configuration
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(f'cuda' if torch.cuda.is_available() else 'cpu')
+    # torch.cuda.set_device(device)
 
     # Data Loader
     dataset = StreamingTokenDataset(master_addr, config_port, sequence_length)
@@ -93,8 +96,8 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
     # Create model, move it to GPU with DDP (if using GPUs)
-    model = Encoder(vocab_size, embed_size, num_layers, heads, rank, forward_expansion, dropout, max_length).to(device)
-    model = DDP(model, device_ids=[rank])
+    model = Encoder(vocab_size, embed_size, num_layers, heads, device, forward_expansion, dropout, max_length).to(device)
+    model = DDP(model)
 
     # Loss function and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -108,16 +111,10 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
         # sampler.set_epoch(epoch)  # Set epoch for sampler
         for batch_idx, (data, target) in enumerate(dataloader):
             data = torch.stack(data, dim=1)
-            # print("Data shape:", data.shape)         # Should be [64, seq_length]
-            data, target = data.to(device), target.to(device)
             mask = create_padding_mask(data, pad_token_id=PAD_TOKEN_ID)
+            data, target, mask = data.to(device), target.to(device), mask.to(device)
             optimizer.zero_grad()
             output = model(data, mask)
-
-            # print("Data shape:", data.shape)         # Should be [64, seq_length]
-            # print("Output shape:", output.shape)     # Should be [64, num_classes]
-            # print("Target shape:", target.shape)     # Should be [64]
-
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
