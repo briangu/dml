@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dml-llm-job
+  name: dml-timeseries-job
   namespace: dml
 spec:
   completions: 6 # should be the same as WORLD_SIZE
@@ -10,8 +10,8 @@ spec:
     spec:
       runtimeClassName: nvidia
       containers:
-      - name: dml-llm-container
-        image: hyperdisk.local:9502/eismcc/dml-llm:latest
+      - name: dml-timeseries-container
+        image: hyperdisk.local:9502/eismcc/dml-timeseries:latest
         imagePullPolicy: Always
         command: ["python3", "train.py"]
         ports:
@@ -21,9 +21,9 @@ spec:
         - name: WORLD_SIZE
           value: "6"  # Set to the parallelism count
         - name: INPUT_PATH
-          value: "/data/output/gpt4-tokens"
+          value: "/data/input/timeseries"
         - name: OUTPUT_PATH
-          value: "/data2/output/llm"
+          value: "/data2/output/timeseries"
         - name: JOB_UUID
           value: "placeholder-for-uuid"
         - name: PYTORCH_PORT
