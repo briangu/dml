@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dml-timeseries-job
+  namespace: dml
+spec:
+  completions: 6 # should be the same as WORLD_SIZE
+  parallelism: 6 # should be the same as WORLD_SIZE
+  template:
+    spec:
+      runtimeClassName: nvidia
+      containers:
+      - name: dml-timeseries-container
+        image: hyperdisk.local:9502/eismcc/dml-timeseries:latest
+        imagePullPolicy: Always
+        command: ["python3", "train.py"]
+        ports:
+        - containerPort: 8890
+        - containerPort: 8891
+        env:
+        - name: WORLD_SIZE
+          value: "6"  # Set to the parallelism count
+        - name: INPUT_PATH
+          value: "/data/input/timeseries"
+        - name: OUTPUT_PATH
+          value: "/data2/output/timeseries"
+        - name: JOB_UUID
+          value: "placeholder-for-uuid"
+        - name: PYTORCH_PORT
+          value: "8890"
+        - name: CONFIG_PORT
+          value: "8891"
+        - name: MODEL_HIDDEN_LAYER_SIZE
+          value: "256"
+        - name: MODEL_SEQUENCE_LENGTH
+          value: "128"
+        - name: TRAIN_LR
+          value: "0.0001"
+        - name: TRAIN_BATCH_SIZE
+          value: "256"
+        - name: TRAIN_NUM_EPOCHS
+          value: "10"
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+        #     cpu: "2"
+        #     memory: "16Gi"
+        #   requests:
+        #     cpu: "1"
+        #     memory: "4Gi"
+        volumeMounts:
+        - mountPath: /data
+          name: dml-data
+        - mountPath: /data2
+          name: dml-data-2
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: dml-data
+          persistentVolumeClaim:
+            claimName: dml-data-pvc
+        - name: dml-data-2
+          persistentVolumeClaim:
+            claimName: dml-data-2-pvc
