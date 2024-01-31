@@ -30,6 +30,22 @@ spec:
           value: "8890"
         - name: CONFIG_PORT
           value: "8891"
+        - name: MODEL_EMBED_SIZE
+          value: "256"
+        - name: MODEL_SEQUENCE_LENGTH
+          value: "128"
+        - name: MODEL_NUM_HEADS
+          value: "2"
+        - name: MODEL_NUM_LAYERS
+          value: "2"
+        - name: MODEL_FORWARD_EXPANSION
+          value: "4"
+        - name: TRAIN_LR
+          value: "0.0001"
+        - name: TRAIN_BATCH_SIZE
+          value: "128"
+        - name: TRAIN_NUM_EPOCHS
+          value: "100"
         resources:
           limits:
             nvidia.com/gpu: 1

@@ -70,7 +70,7 @@ PAD_TOKEN_ID=0
 
 def create_padding_mask(seq, pad_token_id=0):
     # Create a mask for the padding tokens
-    return (seq != pad_token_id).unsqueeze(1).unsqueeze(2)
+    return torch.ones_like(seq)#(seq != pad_token_id).unsqueeze(1).unsqueeze(2)
 
 def train(world_size, rank, master_addr, config_port, output_path, config):
     lr=config['lr']

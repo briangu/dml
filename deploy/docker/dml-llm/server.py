@@ -54,16 +54,16 @@ def get_config():
         vocab_size = enc.n_vocab
 
     config = {
-        'lr': 0.001,
-        'num_epochs': 100,
-        'batch_size': 64,
-        'sequence_length': 128,
-        'embed_size': 256,
-        'num_layers': 8,
-        'heads': 8,
-        'forward_expansion': 4,
+        'lr': float(os.environ.get('TRAIN_LR', 0.0001)),
+        'num_epochs': int(os.environ.get('TRAIN_NUM_EPOCHS', 10)),
+        'batch_size': int(os.environ.get('TRAIN_BATCH_SIZE', 64)),
+        'sequence_length': int(os.environ.get('MODEL_SEQUENCE_LENGTH', 128)),
+        'embed_size': int(os.environ.get('MODEL_EMBED_SIZE', 512)),
+        'num_layers': int(os.environ.get('MODEL_NUM_LAYERS', 8)),
+        'heads': int(os.environ.get('MODEL_NUM_HEADS', 8)),
+        'forward_expansion': int(os.environ.get('MODEL_FORWARD_EXPANSION', 4)),
         'dropout': 0.1,
-        'max_length': 128, # same as sequence_length?
+        'max_length': int(os.environ.get('MODEL_SEQUENCE_LENGTH', 128)), # same as sequence_length?
         'vocab_size': vocab_size,
     }
 
