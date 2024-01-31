@@ -27,6 +27,10 @@ class StreamingTokenDataset(IterableDataset):
         self.master_port = master_port
         self.sequence_length = sequence_length
 
+    def __len__(self):
+        # estimate the number of tokens in the dataset
+        return 1000000
+
     def load_file(self, file_path):
         with open(file_path, 'r') as file:
             # Load the JSON data

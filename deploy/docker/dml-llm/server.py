@@ -63,7 +63,7 @@ def get_config():
         'heads': 8,
         'forward_expansion': 4,
         'dropout': 0.1,
-        'max_length': 100,
+        'max_length': 128, # same as sequence_length?
         'vocab_size': vocab_size,
     }
 
@@ -108,9 +108,9 @@ def all_partitions_completed():
     return True
 
 
-def ask_for_config(master_addr, master_port):
+def ask_for_config(master_addr, config_port):
     # ask the master for the config
-    url = f"http://{master_addr}:{master_port}/config"
+    url = f"http://{master_addr}:{config_port}/config"
     response = requests.get(url)
     if response.status_code != 200:
         print("Failed to get config:", response.status_code, response.reason)

@@ -48,7 +48,10 @@ def setup():
     output_path = os.environ['OUTPUT_PATH']
 
     if rank == 0:
+        print("START: creating partitions")
         populate_partitions(os.environ['INPUT_PATH'])
+        print("STOP: created partitions")
+        print("starting config server")
         server = ServerThread(app)
         server.start()
 
@@ -61,6 +64,11 @@ def setup():
 
     return world_size, rank, master_addr, pytorch_port, config_port, output_path
 
+PAD_TOKEN_ID=0
+
+def create_padding_mask(seq, pad_token_id=0):
+    # Create a mask for the padding tokens
+    return (seq != pad_token_id).unsqueeze(1).unsqueeze(2)
 
 def train(world_size, rank, master_addr, config_port, output_path, config):
     lr=config['lr']
@@ -72,7 +80,7 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
     heads=config['heads']
     forward_expansion=config['forward_expansion']
     dropout=config['dropout']
-    src_vocab_size=config['src_vocab_size']
+    vocab_size=config['vocab_size']
     max_length=config['max_length']
 
     # Device configuration
@@ -80,11 +88,12 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
 
     # Data Loader
     dataset = StreamingTokenDataset(master_addr, config_port, sequence_length)
-    dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
+    # sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
+    # dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
+    dataloader = DataLoader(dataset, batch_size=batch_size)
 
     # Create model, move it to GPU with DDP (if using GPUs)
-    model = Encoder(src_vocab_size, embed_size, num_layers, heads, rank, forward_expansion, dropout, max_length).to(device)
+    model = Encoder(vocab_size, embed_size, num_layers, heads, rank, forward_expansion, dropout, max_length).to(device)
     model = DDP(model, device_ids=[rank])
 
     # Loss function and optimizer
@@ -96,11 +105,19 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
     # Training loop
     for epoch in range(1, num_epochs):
         model.train()
-        sampler.set_epoch(epoch)  # Set epoch for sampler
+        # sampler.set_epoch(epoch)  # Set epoch for sampler
         for batch_idx, (data, target) in enumerate(dataloader):
+            data = torch.stack(data, dim=1)
+            # print("Data shape:", data.shape)         # Should be [64, seq_length]
             data, target = data.to(device), target.to(device)
+            mask = create_padding_mask(data, pad_token_id=PAD_TOKEN_ID)
             optimizer.zero_grad()
-            output = model(data)
+            output = model(data, mask)
+
+            # print("Data shape:", data.shape)         # Should be [64, seq_length]
+            # print("Output shape:", output.shape)     # Should be [64, num_classes]
+            # print("Target shape:", target.shape)     # Should be [64]
+
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -112,15 +129,15 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
 
 
 if __name__ == "__main__":
-    world_size, rank, master_addr, pytorch_port, config_port, output_path = setup()
-
-    config = ask_for_config(master_addr, pytorch_port)
     print("Setting up")
-    world_size, rank = setup()
+    world_size, rank, master_addr, pytorch_port, config_port, output_path = setup()
+    print("Getting config")
+    config = ask_for_config(master_addr, config_port)
     # print all the config variables
     print("Output Path", output_path,
           "Master Address", master_addr,
-          "Master Port", pytorch_port,
+          "PyTorch Port", pytorch_port,
+          "Config Port", config_port,
           "Rank", rank,
           "World Size", world_size,
           "Config", config)

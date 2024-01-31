@@ -8,9 +8,10 @@ spec:
   parallelism: 2 # should be the same as WORLD_SIZE
   template:
     spec:
+      runtimeClassName: nvidia
       containers:
       - name: dml-llm-container
-        image: eismcc/dml-llm:latest
+        image: hyperdisk.local:9502/eismcc/dml-llm:latest
         imagePullPolicy: Always
         command: ["python3", "train.py"]
         ports:

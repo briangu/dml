@@ -83,6 +83,7 @@ class Encoder(nn.Module):
         self.device = device
         self.word_embedding = nn.Embedding(src_vocab_size, embed_size)
         self.position_embedding = nn.Embedding(max_length, embed_size)
+        self.fc_out = nn.Linear(embed_size, src_vocab_size)
 
         self.layers = nn.ModuleList(
             [
@@ -104,5 +105,7 @@ class Encoder(nn.Module):
 
         for layer in self.layers:
             out = layer(out, out, out, mask)
+
+        out = self.fc_out(out[:, 0])
 
         return out

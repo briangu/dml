@@ -20,7 +20,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: dml-minst-container
-        image: eismcc/dml-mnist-cpu:latest
+        image: 192.168.0.12:9500/eismcc/dml-mnist-cpu:latest
         imagePullPolicy: Always
         command: ["python3", "train.py"]
         ports:

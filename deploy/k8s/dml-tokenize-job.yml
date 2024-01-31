@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
       - name: dml-tokenize-container
-        image: eismcc/dml-tokenize:latest
+        image: 192.168.0.12:9500/eismcc/dml-tokenize:latest
         imagePullPolicy: Always
         command: ["python3", "dml_tokenize.py"]
         ports:
