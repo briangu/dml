@@ -47,9 +47,9 @@ spec:
         - name: TRAIN_LR
           value: "0.0001"
         - name: TRAIN_BATCH_SIZE
-          value: "128"
+          value: "512"
         - name: TRAIN_NUM_EPOCHS
-          value: "100"
+          value: "10"
         resources:
           limits:
             nvidia.com/gpu: 1

@@ -103,7 +103,7 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
         # sampler.set_epoch(epoch)  # Set epoch for sampler
         for batch_idx, (data, target) in enumerate(dataloader):
             # target = target.unsqueeze(1).expand(-1, sequence_length)
-            print(f"Epoch {epoch}, Batch {batch_idx}, Data {data.shape}, Target {target.shape}")
+            # print(f"Epoch {epoch}, Batch {batch_idx}, Data {data.shape}, Target {target.shape}")
             # data = torch.stack(data, dim=1)
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
@@ -111,7 +111,7 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
             # print(f"Output {output.shape}, Target {target.shape}")
             # output = output.transpose(1, 2)
             # target = target.view(-1)
-            print(f"Output {output.shape}, Target {target.shape}")
+            # print(f"Output {output.shape}, Target {target.shape}")
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -122,6 +122,7 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
             print(f"Epoch {epoch}, Loss {loss.item()}")
             # save the model
             torch.save(model.state_dict(), f"{output_path}/model_{epoch}.pt")
+            populate_partitions(os.environ['INPUT_PATH'])
             # if all_partitions_completed():
             #     print("All partitions completed")
             #     break
