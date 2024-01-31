@@ -4,8 +4,8 @@ metadata:
   name: dml-llm-job
   namespace: dml
 spec:
-  completions: 2 # should be the same as WORLD_SIZE
-  parallelism: 2 # should be the same as WORLD_SIZE
+  completions: 6 # should be the same as WORLD_SIZE
+  parallelism: 6 # should be the same as WORLD_SIZE
   template:
     spec:
       runtimeClassName: nvidia
@@ -19,7 +19,7 @@ spec:
         - containerPort: 8891
         env:
         - name: WORLD_SIZE
-          value: "2"  # Set to the parallelism count
+          value: "6"  # Set to the parallelism count
         - name: INPUT_PATH
           value: "/data/output"
         - name: OUTPUT_PATH
