@@ -84,7 +84,7 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
     device = torch.device(f'cuda' if torch.cuda.is_available() else 'cpu')
 
     # Data Loader
-    dataset = StreamingTokenDataset(master_addr, config_port, sequence_length)
+    dataset = StreamingTokenDataset(master_addr, config_port, sequence_length, vocab_size)
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
     # Create model, move it to GPU with DDP (if using GPUs)
@@ -102,10 +102,16 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
         model.train()
         # sampler.set_epoch(epoch)  # Set epoch for sampler
         for batch_idx, (data, target) in enumerate(dataloader):
-            data = torch.stack(data, dim=1)
+            # target = target.unsqueeze(1).expand(-1, sequence_length)
+            print(f"Epoch {epoch}, Batch {batch_idx}, Data {data.shape}, Target {target.shape}")
+            # data = torch.stack(data, dim=1)
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
+            # print(f"Output {output.shape}, Target {target.shape}")
+            # output = output.transpose(1, 2)
+            # target = target.view(-1)
+            print(f"Output {output.shape}, Target {target.shape}")
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()

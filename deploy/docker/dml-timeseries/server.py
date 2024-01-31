@@ -4,7 +4,6 @@ import threading
 import time
 
 import requests
-import tiktoken
 from flask import Flask, jsonify
 from flask import request as flask_request
 from werkzeug.serving import make_server
@@ -43,17 +42,9 @@ def is_partition_expired(partition):
     return partition['status'] == STATUS_PROCESSING and (time.time() - partition['timestamp']) > PARTITION_TTL
 
 
-vocab_size = None
-
-
 @app.route('/config', methods=['GET'])
 def get_config():
-    global vocab_size
-    if vocab_size is None:
-        enc = tiktoken.encoding_for_model("gpt-4")
-        vocab_size = enc.n_vocab
-
-    config = {
+    return(jsonify({
         'lr': float(os.environ.get('TRAIN_LR', 0.0001)),
         'num_epochs': int(os.environ.get('TRAIN_NUM_EPOCHS', 10)),
         'batch_size': int(os.environ.get('TRAIN_BATCH_SIZE', 64)),
@@ -62,12 +53,10 @@ def get_config():
         'num_layers': int(os.environ.get('MODEL_NUM_LAYERS', 8)),
         'heads': int(os.environ.get('MODEL_NUM_HEADS', 8)),
         'forward_expansion': int(os.environ.get('MODEL_FORWARD_EXPANSION', 4)),
-        'dropout': 0.1,
+        'dropout': float(os.environ.get('MODEL_DROPOUT', 0.1)),
         'max_length': int(os.environ.get('MODEL_SEQUENCE_LENGTH', 128)), # same as sequence_length?
-        'vocab_size': vocab_size,
-    }
-
-    return jsonify(config)
+        'vocab_size': int(os.environ.get('MODEL_QUANTIZE_BUCKETS', 256))
+    }))
 
 
 @app.route('/partition', methods=['GET'])

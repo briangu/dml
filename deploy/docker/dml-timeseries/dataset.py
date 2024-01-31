@@ -41,11 +41,15 @@ def quantize_time_series(data, window_size, vocab_size):
         next_value_scaled = (next_value - min_val) / range_val
 
         # Quantization
-        quantized_window = np.digitize(window_scaled, np.linspace(0, 1, vocab_size), right=False) - 1
-        quantized_target = np.digitize([next_value_scaled], np.linspace(0, 1, vocab_size), right=False)[0] - 1
+        quantized_window = np.digitize(window_scaled, np.linspace(0, 1, vocab_size-1), right=False)# - 1
+        quantized_target = np.digitize([next_value_scaled], np.linspace(0, 1, vocab_size-1), right=False)[0]# - 1
 
-        quantized_data.append(quantized_window)
-        targets.extend(quantized_target)
+        # verify that all values in quantized_target are within the range of vocab_size
+        assert np.all(0 <= quantized_window) and np.all(quantized_window < vocab_size), f"quantized_window: {quantized_window} not in range [0, {vocab_size})"
+        assert 0 <= quantized_target < vocab_size, f"quantized_target: {quantized_target} not in range [0, {vocab_size})"
+
+        quantized_data.append(quantized_window.tolist())
+        targets.append(quantized_target)
 
     return torch.tensor(quantized_data), torch.tensor(targets)
 

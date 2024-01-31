@@ -40,6 +40,10 @@ spec:
           value: "2"
         - name: MODEL_FORWARD_EXPANSION
           value: "4"
+        - name: MODEL_QUANTIZE_BUCKETS
+          value: "256"
+        - name: MODEL_MODEL_DROPOUT
+          value: "0.1"
         - name: TRAIN_LR
           value: "0.0001"
         - name: TRAIN_BATCH_SIZE

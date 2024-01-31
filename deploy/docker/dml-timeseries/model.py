@@ -120,7 +120,7 @@ class TimeSeriesTransformer(nn.Module):
             [TransformerBlock(embed_size, heads, dropout, forward_expansion) for _ in range(num_layers)]
         )
         self.dropout = nn.Dropout(dropout)
-        self.fc_out = nn.Linear(embed_size, vocab_size)
+        self.fc_out = nn.Linear(embed_size*max_length, vocab_size)
 
     def forward(self, x):
         N, sequence_length = x.size()
@@ -130,6 +130,8 @@ class TimeSeriesTransformer(nn.Module):
         for layer in self.layers:
             x = layer(x, x, x, None)
 
-        out = self.fc_out(x)
-        return out
+        x = x.view(x.size(0), -1)
+        # out = self.fc_out(x)
+        return self.fc_out(x)
+
 
