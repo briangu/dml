@@ -72,7 +72,8 @@ def get_partition():
 def update_partition():
     # update the partition status to processed
     partition_id = flask_request.json['partition_id']
-    partitions[partition_id]['status'] = STATUS_PROCESSED
+    # partitions[partition_id]['status'] = STATUS_PROCESSED
+    del partitions[partition_id]
     return jsonify(message="Partition updated successfully"), 200
 
 

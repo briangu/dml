@@ -31,13 +31,13 @@ spec:
         - name: CONFIG_PORT
           value: "8891"
         - name: MODEL_HIDDEN_LAYER_SIZE
-          value: "256"
+          value: "1024"
         - name: MODEL_SEQUENCE_LENGTH
           value: "128"
         - name: TRAIN_LR
           value: "0.00001"
         - name: TRAIN_BATCH_SIZE
-          value: "2048"
+          value: "256"
         - name: TRAIN_NUM_EPOCHS
           value: "10"
         resources:
