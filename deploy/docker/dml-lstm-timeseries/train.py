@@ -9,11 +9,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dataset import StreamingDataset
-from model import LSTMTimeSeriesModel
+from model import LSTMTimeSeriesModel, ResidualLSTMTimeSeriesModel
 from server import (ServerThread, all_partitions_completed, app,
                     ask_for_config, populate_partitions)
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
+import math
 
 
 def register_with_discovery():
@@ -67,7 +68,7 @@ def setup():
     return world_size, rank, master_addr, pytorch_port, config_port, output_path
 
 
-def train(world_size, rank, master_addr, config_port, output_path, config):
+def train(world_size, rank, master_addr, config_port, output_path, config, clip_value=1.0):
     lr=config['lr']
     num_epochs=config['num_epochs']
     batch_size=config['batch_size']
@@ -82,12 +83,12 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
     # Create model, move it to GPU with DDP (if using GPUs)
-    model = LSTMTimeSeriesModel(sequence_length, hidden_layer_size, 1).to(device)
+    model = ResidualLSTMTimeSeriesModel(sequence_length, hidden_layer_size, 1).to(device)
     model = DDP(model)
 
     # Loss function and optimizer
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr * world_size)  # Scale LR
+    optimizer = optim.Adam(model.parameters(), lr=lr * math.sqrt(world_size))  # Scale LR
 
     print("Starting training")
 
@@ -99,8 +100,12 @@ def train(world_size, rank, master_addr, config_port, output_path, config):
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
+            output = output.squeeze()
+            # print("Output", output.shape, "Target", target.shape)
             loss = criterion(output, target)
+            # return
             loss.backward()
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), clip_value)
             optimizer.step()
             if batch_idx % 10 == 0:
                 print(f"Epoch {epoch}, Batch {batch_idx}, Loss {loss.item()}")

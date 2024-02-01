@@ -1,17 +1,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: dml-timeseries-job
+  name: dml-lstm-timeseries-job
   namespace: dml
 spec:
-  completions: 6 # should be the same as WORLD_SIZE
-  parallelism: 6 # should be the same as WORLD_SIZE
+  completions: 8 # should be the same as WORLD_SIZE
+  parallelism: 8 # should be the same as WORLD_SIZE
   template:
     spec:
       runtimeClassName: nvidia
       containers:
-      - name: dml-timeseries-container
-        image: hyperdisk.local:9502/eismcc/dml-timeseries:latest
+      - name: dml-lstm-timeseries-container
+        image: hyperdisk.local:9502/eismcc/dml-lstm-timeseries:latest
         imagePullPolicy: Always
         command: ["python3", "train.py"]
         ports:
@@ -19,7 +19,7 @@ spec:
         - containerPort: 8891
         env:
         - name: WORLD_SIZE
-          value: "6"  # Set to the parallelism count
+          value: "8"  # Set to the parallelism count
         - name: INPUT_PATH
           value: "/data/input/timeseries"
         - name: OUTPUT_PATH
@@ -35,9 +35,9 @@ spec:
         - name: MODEL_SEQUENCE_LENGTH
           value: "128"
         - name: TRAIN_LR
-          value: "0.0001"
+          value: "0.00001"
         - name: TRAIN_BATCH_SIZE
-          value: "256"
+          value: "128"
         - name: TRAIN_NUM_EPOCHS
           value: "10"
         resources:
