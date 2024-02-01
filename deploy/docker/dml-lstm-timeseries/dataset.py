@@ -49,10 +49,11 @@ def window_time_series(data, window_size):
 
 
 class StreamingDataset(IterableDataset):
-    def __init__(self, master_addr, master_port, window_size):
+    def __init__(self, master_addr, master_port, window_size, lookahead_window_size=10):
         self.master_addr = master_addr
         self.master_port = master_port
         self.window_size = window_size
+        self.lookahead_window_size = lookahead_window_size
 
     def _load_file(self, file_path):
         # read the pickled pandas file
@@ -65,7 +66,9 @@ class StreamingDataset(IterableDataset):
         #     yield quantized_data[i], targets[i]
         for i in range(len(data) - self.window_size):
             window = data[i:i + self.window_size]
-            next_value = data[i + self.window_size]
+#            next_value = data[i + self.window_size]
+            # compute the average of the next 10 values
+            next_value = np.mean(data[i + self.window_size:i + self.window_size + self.lookahead_window_size])
 
             # Scaling based on the window's min and max
             min_val, max_val = np.min(window), np.max(window)

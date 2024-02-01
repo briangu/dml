@@ -37,7 +37,7 @@ spec:
         - name: TRAIN_LR
           value: "0.00001"
         - name: TRAIN_BATCH_SIZE
-          value: "128"
+          value: "2048"
         - name: TRAIN_NUM_EPOCHS
           value: "10"
         resources:
