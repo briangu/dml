@@ -8,6 +8,8 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
+RUN apt update && apt install -y build-essential
+
 # Copy the current directory contents into the container at /usr/src/app
 COPY . .
 
