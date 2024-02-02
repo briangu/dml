@@ -9,6 +9,14 @@ spec:
   template:
     spec:
       runtimeClassName: nvidia
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: "nvidia.com/gpu.memory"
+                operator: Gt # (greater than)
+                values: ["12000"]
       containers:
       - name: dml-nanogpt-container
         image: hyperdisk.local:9502/eismcc/dml-nanogpt:latest
@@ -28,6 +36,16 @@ spec:
           value: "placeholder-for-uuid"
         - name: PYTORCH_PORT
           value: "8890"
+        - name: MODEL_BATCH_SIZE
+          value: "12"
+        - name: MODEL_BLOCK_SIZE
+          value: "512"
+        - name: MODEL_NUM_LAYERS
+          value: "24"
+        - name: MODEL_NUM_HEADS
+          value: "16"
+        - name: MODEL_EMBEDDING_DIM
+          value: "384"
         resources:
           limits:
             nvidia.com/gpu: 1
